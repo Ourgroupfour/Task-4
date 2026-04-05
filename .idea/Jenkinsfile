@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven 3.x'
+        jdk 'JDK 17'
+    }
+
+    stages {
+        stage('Build & Compile') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'target/surefire-reports/*.xml'
+        }
+        success {
+            echo '✅ All tests passed!'
+        }
+        failure {
+            echo '❌ Tests failed!'
+            emailext subject: 'Build Failed: ${JOB_NAME} #${BUILD_NUMBER}',
+                     body: 'Check the build here: ${BUILD_URL}',
+                     to: 'yourteam@email.com'
+        }
+    }
+}
